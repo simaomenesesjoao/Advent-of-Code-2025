@@ -283,9 +283,9 @@ L second_part(const std::vector<Point2D>& points_orig) {
 
 
     L max_area = 0;
-    for(int i=0; i<points.size(); i++){
+    for(unsigned int i=0; i<points.size(); i++){
         const auto& P = points.at(i);
-        for(int j=i+1; j<points.size(); j++){
+        for(unsigned int j=i+1; j<points.size(); j++){
             const auto& Q = points.at(j);
             
             int xi = std::min(P.x, Q.x);

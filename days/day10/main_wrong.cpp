@@ -3,7 +3,7 @@
 #include <vector>
 #include <iostream>
 #include "utils/utils.h"
-#include "lp/lp.h"
+#include <lp/lp.h>
 #include <Eigen/Dense>
 
 using Button = std::vector<int>;
@@ -161,24 +161,34 @@ L second_part(const std::vector<Machine>& machines) {
     for(const auto& machine: machines){
 
         unsigned int num_buttons = machine.buttons.size();
+        unsigned int num_joltages = machine.joltages.size();
 
-        // Example: (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
-        Constraints constraints;
-        for(const auto& joltage: machine.joltages){    
-            std::vector<double> row(num_buttons, 0.0);
-            constraints.push_back({(double)joltage, row, (double)joltage});
-        }
-
-        for(unsigned int j=0; j<num_buttons; j++){
-            for(const auto& value: machine.buttons.at(j)){
-                constraints.at(value).row.at(j) = 1.0;
+        Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(num_joltages, num_buttons);
+        Eigen::VectorXd constraints = Eigen::VectorXd(num_joltages);
+        
+        for(unsigned int i=0; i<num_buttons; i++){
+            const auto& button = machine.buttons.at(i);
+            for(int digit: button){
+                matrix(digit,i) = 1;
             }
         }
-        
-        Eigen::VectorXd cost = -Eigen::VectorXd::Ones(num_buttons);
-        auto sol = optimize_ilp(constraints, cost);
-        count += -static_cast<int>(std::round(sol.cost));
+
+        for(unsigned int i=0; i<num_joltages; i++){
+            constraints(i) = machine.joltages.at(i);
+        }
+
+        Eigen::VectorXd cost = Eigen::VectorXd::Ones(num_buttons);
+
+
+
+        auto sol = optimize_ilp(matrix, constraints, cost);
+
+
+        std::cout << "Cost: " << sol.cost << "\n";
+        count += sol.cost;
+
     }
+
     return count;
 }
 
@@ -196,6 +206,6 @@ int main(int argc, char** argv){
     std::cout << "Count: " << count << "\n";
 
     L count2 = second_part(output.machines);
-    std::cout << "Count: " << count2 << "\n"; // Solution: 21824 
+    std::cout << "Count: " << count2 << "\n";
 
 }
